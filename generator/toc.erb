@@ -1,0 +1,56 @@
+\documentclass[10pt,a5paper,twoside]{article}
+
+\usepackage{mathspec}
+\usepackage{fontspec}
+\defaultfontfeatures{Mapping=tex-text,Ligatures={TeX},Kerning=On}
+
+\def\MyTimesFont#1{\expandafter#1[]{Times New Roman}}
+\def\MyCourierFont#1{\expandafter#1[]{Courier New}}
+\def\MyArialFont#1{\expandafter#1{Arial}}
+
+\MyTimesFont{\setmainfont}
+\MyTimesFont{\setromanfont}
+\MyTimesFont{\newfontfamily{\cyrillicfont}}
+\MyCourierFont{\setmonofont}
+\MyCourierFont{\newfontfamily{\cyrillicfonttt}}
+\MyArialFont{\setsansfont}
+\MyArialFont{\newfontfamily{\cyrillicfontsf}}
+
+\usepackage{polyglossia}
+\setdefaultlanguage{russian}
+\setotherlanguages{english}
+
+\usepackage[unicode,colorlinks=false]{hyperref}
+\usepackage[table,xcdraw]{xcolor}
+\usepackage[fit,breakall]{truncate}
+\usepackage{amsfonts}
+
+\usepackage[top=23mm,left=17mm,right=17mm,bottom=17mm,headsep=3mm]{geometry}
+\usepackage{fancyhdr}
+\usepackage{emptypage}
+
+\usepackage{tocloft}
+\setlength{\cftsecnumwidth}{0pt}
+\setlength{\cftsubsecnumwidth}{0pt}
+
+
+\setcounter{page}{<%= startpage %>}
+
+\fancyhf{}
+\fancyhead[LE,RO]{\thepage}
+\fancyhead[RE]{\truncate{4.25in}{\footnotesize <%= confname %>}}
+\fancyhead[LO]{\truncate{4.25in}{\footnotesize <%= toctitle %>}}
+\pagestyle{fancy}
+
+\begin{document}
+\thispagestyle{empty}
+\begin{center}
+{\Large \textbf{<%= toctitle %>}}
+\end{center}
+
+\hypersetup{hidelinks}
+
+<%= toc %>
+
+\cleardoublepage
+\end{document}

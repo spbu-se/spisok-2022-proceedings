@@ -1,0 +1,64 @@
+\documentclass[10pt,a5paper]{article}
+
+\usepackage{mathspec}
+\usepackage{fontspec}
+\defaultfontfeatures{Mapping=tex-text,Ligatures={TeX},Kerning=On}
+
+\def\MyTimesFont#1{\expandafter#1[]{Times New Roman}}
+\def\MyCourierFont#1{\expandafter#1[]{Courier New}}
+\def\MyArialFont#1{\expandafter#1{Arial}}
+
+\MyTimesFont{\setmainfont}
+\MyTimesFont{\setromanfont}
+\MyTimesFont{\newfontfamily{\cyrillicfont}}
+\MyCourierFont{\setmonofont}
+\MyCourierFont{\newfontfamily{\cyrillicfonttt}}
+\MyArialFont{\setsansfont}
+\MyArialFont{\newfontfamily{\cyrillicfontsf}}
+
+\usepackage{polyglossia}
+\setdefaultlanguage{russian}
+\setotherlanguages{english}
+
+\usepackage[unicode]{hyperref}
+\usepackage{authblk}
+\usepackage{booktabs}
+\usepackage{indentfirst}
+\usepackage{titlesec}
+\usepackage{graphicx}
+\usepackage[table,xcdraw]{xcolor}
+\usepackage{listings}
+\usepackage{makecell}
+\usepackage[fit,breakall]{truncate}
+\usepackage{amsfonts}
+
+\usepackage[top=23mm,left=17mm,right=17mm,bottom=17mm,headsep=3mm]{geometry}
+\usepackage[font=small,skip=0pt]{caption}
+\usepackage{fancyhdr}
+
+\makeatletter
+\newcommand{\resetHeadWidth}{\f@nch@setoffs}
+\makeatother
+
+
+\pagestyle{empty}
+\begin{document}
+
+\begin{center}
+\pdfbookmark[1]{<%= @name %>}{abspage-<%= start_page %>}
+
+{\Large \textbf{\textsf{<%= @name %>}}}
+
+<% chairman_texs.each_with_index do |ct, i| %> <% if i > 0 then %>\vspace{5mm}<% end %> <%= ct %> <% end %>
+\end{center}
+\newpage
+
+
+<%= warning %>
+
+<%= emptypage %>
+
+<%= articles_tex %>
+
+<%= finalemptypage %>     
+\end{document}
