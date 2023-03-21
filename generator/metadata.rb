@@ -28,10 +28,15 @@ class Article
     end
   end
 
+  def by()
+    # Joins to string
+    @author_list.map { | a | a.gsub /\s+/, '\\,' }.join ' '
+  end
+
   def initialize(ardic, sec)
     @section = sec
     @title = ardic['title']
-    @by = ardic['by']
+    @author_list = ardic['by']
     @file = ardic['file']
     @fullfile = File::join(sec.folder, @file)
     @pagescount = self.getpagescount
