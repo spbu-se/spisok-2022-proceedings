@@ -41,28 +41,30 @@ class Section
       f.write section_tex 
     end
 
-    File::open(File::join(@folder, "_section-compile.sh"), "w:UTF-8") do |f|
+    win = is_os_windows?
+    suffix, hashbang = win ? [ 'bat', '' ] : [ 'sh', '#!/bin/bash' ]
+
+    File::open(File::join(@folder, "_section-compile.#{suffix}"), "w:UTF-8") do |f|
       pdfs = ['../../generator/a5-empty.pdf'] * 2 +
         @articles.map { |a| File::basename(a.fullfile) } +
         if add_empty then ['../../generator/a5-empty.pdf'] else [] end
 
       f.write <<~COMPILE
-        #!/bin/bash
+        #{hashbang}
         xelatex _section-overlay.tex
         xelatex _section-overlay.tex
 
         pdftk #{pdfs.join ' '} cat output _section-articles.pdf
         pdftk _section-overlay.pdf multibackground _section-articles.pdf output #{@pdfname}
 
-        mv #{@pdfname} ..
+        #{win ? 'move' : 'mv'} #{@pdfname} ..
 
         COMPILE
     end
 
-    File::u_plus_x File::join(@folder, "_section-compile.sh")
-
+    if not win
+      File::u_plus_x File::join(@folder, "_section-compile.sh")
+    end
     cur_page
   end
 end
-      
-      

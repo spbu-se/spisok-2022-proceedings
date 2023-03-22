@@ -3,12 +3,16 @@
 require_relative './misc.rb'
 
 def gen_whole(sections)
-  File::open(File::join("..", "sections", "_gen_whole.sh"), "w:UTF-8") do |f|
-    f.puts "#!/bin/bash\n"
+  win = is_os_windows?
+  suffix, scall = win ? ['bat', 'call'] : ['sh', '.']
+  File::open(File::join("..", "sections",  "_gen_whole.#{suffix}"), "w:UTF-8") do |f|
+    if not win then
+      f.puts "#!/bin/bash\n"
+    end
     sections.each do |s|
       f.puts <<~SPP
         pushd #{s.folder}
-        . _section-compile.sh
+        #{scall} _section-compile.#{suffix}
         popd
         SPP
     end
@@ -21,6 +25,7 @@ def gen_whole(sections)
       TOC
   end
 
-  File::u_plus_x File::join("..", "sections", "_gen_whole.sh")
-
+  if not win then
+    File::u_plus_x File::join("..", "sections", "_gen_whole.sh")
+  end
 end
