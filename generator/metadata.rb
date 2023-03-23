@@ -74,7 +74,7 @@ class Proceedings
     @title = procmeta['title']
     @content_start_page = procmeta['content_start_page'].to_i
     @sections = procmeta['sections'].map do |f|
-      Section::new(YAML::load_file(File::join(f, 'section.yml')), f, @title)
+      Section::new(YAML::load_file(File::join(sectionsfolder, f, 'section.yml')), f, @title)
     end
   end
 end

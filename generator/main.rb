@@ -5,6 +5,12 @@ require_relative './generator.rb'
 require_relative './toc.rb'
 require_relative './whole.rb'
 
+section_folder = if ARGV.length < 1 then
+  File::join(File::dirname(File::expand_path(__FILE__)), '../sections')
+else
+  File::expand_path(ARGV[0])
+end
+
 proceedings = Proceedings::new(File::join(File::dirname(File::expand_path(__FILE__)), '../sections'))
 
 cpage = proceedings.content_start_page
