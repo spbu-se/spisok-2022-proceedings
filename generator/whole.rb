@@ -11,7 +11,7 @@ def gen_whole(sections)
     end
     sections.each do |s|
       f.puts <<~SPP
-        pushd #{s.folder}
+        pushd #{s.foldername}
         #{scall} _section-compile.#{suffix}
         popd
         SPP

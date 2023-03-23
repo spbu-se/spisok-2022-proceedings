@@ -37,14 +37,14 @@ class Section
     section_templ = ERB::new(File::read(File::join(File::dirname(__FILE__), 'section_tex.erb')))
     section_tex = section_templ.result binding
 
-    File::open(File::join(@folder, "_section-overlay.tex"), "w:UTF-8") do |f|
+    File::open(File::join(@fullfolder, "_section-overlay.tex"), "w:UTF-8") do |f|
       f.write section_tex 
     end
 
     win = is_os_windows?
     suffix, hashbang = win ? [ 'bat', '' ] : [ 'sh', '#!/bin/bash' ]
 
-    File::open(File::join(@folder, "_section-compile.#{suffix}"), "w:UTF-8") do |f|
+    File::open(File::join(@fullfolder, "_section-compile.#{suffix}"), "w:UTF-8") do |f|
       pdfs = ['../../generator/a5-empty.pdf'] * 2 +
         @articles.map { |a| File::basename(a.fullfile) } +
         if add_empty then ['../../generator/a5-empty.pdf'] else [] end
@@ -58,7 +58,6 @@ class Section
         pdftk _section-overlay.pdf multibackground _section-articles.pdf output #{@pdfname}
 
         #{win ? 'move' : 'mv'} #{@pdfname} ..
-
         COMPILE
     end
 

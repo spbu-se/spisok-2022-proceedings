@@ -38,19 +38,20 @@ class Article
     @title = ardic['title']
     @author_list = ardic['by']
     @file = ardic['file']
-    @fullfile = File::join(sec.folder, @file)
+    @fullfile = File::join(sec.fullfolder, @file)
     @pagescount = self.getpagescount
     @start_page = nil
   end
 end
 
 class Section
-  attr_reader :folder, :foldername, :pdfname, :name, :status, :heads, :articles, :confname
+  attr_reader :fullfolder, :foldername, :pdfname, :name, :status, :heads, :articles, :confname
   attr_accessor :start_page
 
-  def initialize(secdic, folder, confname)
-    @folder = folder
-    @foldername = File::basename folder
+  def initialize(fullfolder, confname)
+    secdic = YAML::load_file(File::join(fullfolder, 'section.yml'))
+    @fullfolder = fullfolder
+    @foldername = File::basename fullfolder
     @pdfname = "_section--#{@foldername}.pdf"
     @name = secdic['name']
     @status = secdic['status']
@@ -74,7 +75,7 @@ class Proceedings
     @title = procmeta['title']
     @content_start_page = procmeta['content_start_page'].to_i
     @sections = procmeta['sections'].map do |f|
-      Section::new(YAML::load_file(File::join(sectionsfolder, f, 'section.yml')), f, @title)
+      Section::new(File::expand_path(File::join(sectionsfolder, f)), @title)
     end
   end
 end
