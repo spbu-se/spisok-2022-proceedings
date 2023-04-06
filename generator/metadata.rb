@@ -23,7 +23,7 @@ class Article
 
   def by()
     # Joins to string
-    @author_list.map { | a | a.gsub /\s+/, '\\,' }.join ' '
+    @author_list.map { | a | a.gsub /\s+/, '\\,' }.join ', '
   end
 
   def initialize(ardic, sec)
