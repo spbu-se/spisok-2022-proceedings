@@ -18,14 +18,7 @@ class Article
   attr_accessor :start_page
 
   def getpagescount
-    output = `pdftk #{@fullfile} dump_data`
-    /NumberOfPages:\s+(?<npages>\d+)/ =~ output
-    if npages
-      npages.to_i
-    else
-      raise "No number of pages in #{@fullfile}"
-      nil
-    end
+    get_page_count @fullfile
   end
 
   def by()
@@ -73,7 +66,8 @@ class Proceedings
     procmeta = YAML::load_file(File::join(sectionsfolder, 'proceedings.yml'))
     @sectionsfolder = sectionsfolder
     @title = procmeta['title']
-    @content_start_page = procmeta['content_start_page'].to_i
+    start_page_count = get_page_count(File::join(sectionsfolder, '_a_begin.pdf'))
+    @content_start_page = start_page_count + ( start_page_count.odd? ? 2 : 1 )
     @sections = procmeta['sections'].map do |f|
       Section::new(File::expand_path(File::join(sectionsfolder, f)), @title)
     end
