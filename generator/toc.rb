@@ -20,7 +20,7 @@ def gen_toc(sections, toctitle, confname, startpage)
   section_templ = ERB::new(File::read(File::join(File::dirname(__FILE__), 'toc.erb')))
   section_tex = section_templ.result binding
 
-  File::open(File::join("..", "sections", "_toc.tex"), "w:UTF-8") do |f|
+  File::open(File::join(File::dirname(sections[0].fullfolder), "_toc.tex"), "w:UTF-8") do |f|
     f.write section_tex
   end
 end

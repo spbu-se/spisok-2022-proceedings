@@ -5,8 +5,9 @@ require_relative './misc.rb'
 def gen_whole(sections)
   win = is_os_windows?
   suffix, scall = win ? ['bat', 'call'] : ['sh', '.']
+  sec_folder = File::dirname(sections[0].fullfolder)
 
-  File::open(File::join("..", "sections",  "_gen_whole.#{suffix}"), "w:UTF-8") do |f|
+  File::open(File::join(sec_folder, "_gen_whole.#{suffix}"), "w:UTF-8") do |f|
     if not win then
       f.puts "#!/bin/bash\n"
     end
@@ -26,7 +27,7 @@ def gen_whole(sections)
       TOC
   end
 
-  File::open(File::join("..", "sections",  "__concat_proceedings.#{suffix}"), "w:UTF-8") do |f|
+  File::open(File::join(sec_folder,  "__concat_proceedings.#{suffix}"), "w:UTF-8") do |f|
     if not win then
       f.puts "#!/bin/bash\n"
     end
@@ -37,7 +38,7 @@ def gen_whole(sections)
   end
 
   if not win then
-    File::u_plus_x File::join("..", "sections", "_gen_whole.sh")
-    File::u_plus_x File::join("..", "sections", "__concat_proceedings.sh")
+    File::u_plus_x File::join(sec_folder, "_gen_whole.sh")
+    File::u_plus_x File::join(sec_folder, "__concat_proceedings.sh")
   end
 end

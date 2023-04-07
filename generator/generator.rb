@@ -62,7 +62,7 @@ class Section
     end
 
     if not win
-      File::u_plus_x File::join(@folder, "_section-compile.sh")
+      File::u_plus_x File::join(@fullfolder, "_section-compile.sh")
     end
     cur_page
   end
