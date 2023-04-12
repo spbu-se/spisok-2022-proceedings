@@ -1,0 +1,359 @@
+\documentclass{spisok-article}
+\usepackage{listings} % Листинг
+\usepackage{comment} % Многострочные комментарии
+\lstset{frame=tb, %Стиль листинга
+	aboveskip=3mm,
+	belowskip=3mm,
+	showstringspaces=false,
+	columns=flexible,
+	basicstyle={\small\ttfamily},
+	numbers=none,
+	numberstyle=\tiny\color{gray},
+	keywordstyle=\color{blue},
+	commentstyle=\color{dkgreen},
+	stringstyle=\color{mauve},
+	breaklines=true,
+	breakatwhitespace=true,
+	tabsize=3
+}
+
+\title{Применение технологии параллельного программирования и сплайнов при решении уравнения Фредгольма второго рода}
+}
+
+\author{
+	Бурова И. Г., профессор кафедры вычислительной математики СПбГУ, burovaig@mail.ru,\\
+	Алцыбеев Г. О., аспирант кафедры вычислительной математики СПбГУ, gleb.alcybeev@gmail.com
+}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+В работе рассматривается применение технологии параллельных вычислений OpenMP для решения интегрального уравнения Фредгольма второго рода с помощью локальных интерполяционных сплайнов второго порядка аппроксимации.
+\end{abstract}
+
+\section{Введение}
+
+В настоящее время при разработке программного кода много внимания уделяется различного рода оптимизациям для повышения скорости вычислений. В качестве одного из основных способов повышения скорости работы программы можно отметить распараллеливание вычислений. Параллельные вычисления --- это вид вычислений, при которых сразу несколько вычислительных процессов выполняются одновременно в течение одного и того же периода времени.
+%В такой парадигме один вычислительный процесс разбивается на подвычислительные процессы, которые могут выполняться одновременно.
+Пионерами в области параллельных вычислений являются Эдсгер Дейкстра \cite{De}, Пер Бринч Хансен \cite{PerBrinchHansen1}, \cite{PerBrinchHansen2} и К.~А.~Р.~Хоар \cite{hoare}. Большой вклад в области параллельных вычислений внесли В.~В.~Воеводин и В.~В.~Воводин~\cite{Voevodin}, В.~П.~Гергель~\cite{Gergel}, А.~С.~Антонов~\cite{Antonov}, В.~Д.~Корнеев~\cite{Korneev}, и С.~А.~Немнюгин~\cite{Nemn}.
+
+В качестве одного из инструментов параллельных вычислений можно выделить технологию OpenMP. OpenMP --- это интерфейс прикладного программирования, который поддерживает многоплатформенное многопроцессорное программирование с общей памятью на языках C, C++ и Fortran.
+
+
+\section{Решение уравнения Фредгольма и сплайновые аппроксимации}
+Пусть $a,b\in\mathbb{R}$. Рассмотрим линейное интегральное уравнение Фредгольма второго рода 
+$$
+	\begin{gathered}
+		y\left(x\right)-\int^b_a K\left(x,s\right)y\left(s\right)ds=f\left(x\right),\quad x\in \left[a,b\right],
+	\end{gathered}
+$$
+где $f\left(x\right)$ такая, что $f\in C\left[a,b\right]$~--- правая часть, $K\left(x,s\right)$ --- ядро, определенное в квадрате $\Pi =\left\{\left(x,s\right) |\, a \leqslant x \leqslant b, a\leqslant s\leqslant b\right\}$, полагаем, что ядро $K\left(x,s\right)$ непрерывно в квадрате~$\Pi$, а $y\left(x\right)$ --- искомая непрерывная функция, $x\in\left[a,b\right]$.
+
+На промежутке $\left[a,b\right]$ задаем узлы сетки $a= x_1 < x_2 < \ldots < x_n = b$. Приближенные значения $\tilde y\left(s\right)$ функции $y\left(s\right)$ на промежутке $\left[x_j,x_{j+1}\right]$ определяем по правилу
+\begin{equation}
+	\begin{gathered}
+		\tilde y \left(s\right)=y\left(x_j\right)\omega_j\left(s\right)+y\left(x_{j+1}\right)\omega_{j+1}\left(s\right),\quad s\in\left[x_j, x_{j+1}\right],
+	\end{gathered}
+	\label{y_sp123}
+\end{equation}
+где $\omega_{j}\left(s\right)$ и $\omega_{j+1}\left(s\right)$ --- базисные полиномиальные сплайны
+$$
+\omega_j\left(s\right)=\frac{s-x_{j+1}}{x_j-x_{j+1}},\quad \omega_{j+1}\left(s\right)=\frac{s-x_j}{x_{j+1}-x_j}, \quad s\in\left[x_j, x_{j+1}\right],
+%\label{eq:omega1}
+$$
+отметим, что удобно представление $\omega_{j+1}\left(s\right)$:
+$
+\omega_{j+1}\left(s\right)=1-\omega_{j}\left(s\right).
+$
+
+Обозначим
+$
+\Vert y''\Vert_{[x_j,x_{j+1}]}=\max_{\left[x_j,x_{j+1}\right]}\left|y''\left(x\right)\right|.
+$
+Пусть $h=x_{j+1}-x_j$. Можно показать, что в случае полиномиальных сплайнов
+справедливо неравенство
+$$
+\vert \tilde{y}(s)-y(s)\vert \leqslant 0,\!25 h^2 \Vert y''\Vert_{[x_j,x_{j+1}]},\quad s\in[x_j,x_{j+1}].
+$$
+
+Также можно использовать неполиномиальные базисные функции (см. \cite{BurovaIG}, \cite{BurovaIG_AG}) с погрешностью аппроксимации порядка~$O(h^2)$.
+%можно взять функцию $\varphi(s)=e^s$ или $\varphi(s)=e^{-s}$.
+
+Нетрудно видеть, что
+$$
+\begin{gathered}
+	\int^b_a K\left(x,s\right)y\left(s\right)ds\approx\sum_{k=1}^{n-1}\int_{x_j}^{x_{j+1}}K\left(x,s\right)\tilde y\left(s\right)ds,	\quad x\in \left[a,b\right],
+\end{gathered}
+$$
+где $\tilde y\left(s\right)$ имеет вид (\ref{y_sp123}). В результате применения сплайновых аппроксимаций, получаем систему линейных алгебраичеких уравнений (СЛАУ)
+
+
+
+
+%в узлах сетки $a= x_1 < x_2 < \ldots < x_n = b$ будем находит из СЛАУ
+\begin{equation}
+\tilde y\left(x_k\right)+\sum_{j=1}^{n-1}W_j\left(x_k\right)=f\left(x_k\right),\quad k=1,2,\dots,n,
+\label{eq:pslae}
+\end{equation}
+где
+\begin{equation}
+	\begin{gathered}
+W_j\left(x_k\right)=\tilde y\left(x_{j}\right)\int_{x_{j}}^{x_{j+1}}K\left(x_k,s\right)\omega_{j}\left(s\right)ds+\\
++\tilde y\left(x_{j+1}\right)\int_{x_{j}}^{x_{j+1}}K\left(x_k,s\right)\left(1-\omega_{j}\left(s\right)\right)ds.
+\end{gathered}
+	\label{eq:pol_spline12}
+\end{equation}
+Равенство (\ref{eq:pol_spline12}) можно упростить, таким образом оно принимает следующий вид
+$$
+W_j\left(x_k\right)=\left(\tilde y\left(x_j\right)-\tilde y\left(x_{j+1}\right)\right)\int_{x_j}^{x_{j+1}} K\left(x_k,s\right)\omega_{j}\left(s\right)ds+
+$$
+$$
++\tilde y\left(x_{j+1}\right)\int_{x_j}^{x_{j+1}}K\left(x_k,s\right)ds,
+$$
+кроме этого, в случае, если интеграл трудно вычислять, можно использовать следующую форму записи
+$$
+W_j\left(x_k\right)=\left(\frac{\tilde y\left(x_j\right)-\tilde{y}\left(x_j+1\right)}{x_j-x_{j+1}}\right)\int_{x_j}^{x_{j+1}}K\left(x_k,s\right)sds+
+$$
+
+$$
++\left(\tilde y\left(x_{j+1}\right)-\frac{x_{j+1}}{x_j-x_{j+1}}\right)\int_{x_j}^{x_{j+1}}K\left(x_k,s\right)ds.
+$$
+
+В большинстве случаев интегралы вычисляются в конечном виде, либо можно применить соотвующие квадратурные формулы.
+
+Приведем СЛАУ (\ref{eq:pslae}) к виду $A \tilde y=b$. Выпишем случай, когда $n=3$, тогда $\tilde y=\left(\tilde y\left(x_1\right),\tilde y\left(x_2\right),\tilde y\left(x_3\right)\right)^T$, а $b=\left(f\left(x_1\right),f\left(x_2\right)\right.$, $\left.f\left(x_3\right)\right)^T$.
+
+С учетом того, что $n=3$ имеем систему
+\begin{equation}
+	\begin{gathered}
+		\begin{cases}
+			\tilde y\left(x_1\right)-\tilde y\left(x_1\right)K_{00}-\tilde y\left(x_2\right) K_{10}-\tilde y\left(x_2\right) K_{20}-\tilde y\left(x_3\right)K_{30}=f\left(x_1\right),\\
+			\tilde y\left(x_2\right)-\tilde y\left(x_1\right)K_{01}-\tilde y \left(x_2\right)K_{11}-\tilde{y}\left(x_2\right)K_{21}-\tilde y\left(x_3\right)K_{31}=f\left(x_2\right),\\
+			\tilde y\left(x_3\right)-\tilde y\left(x_1\right)K_{02}-\tilde y\left(x_2\right) K_{12}-\tilde y\left(x_2\right) K_{22}-\tilde y\left(x_3\right) K_{32}=f\left(x_3\right),
+		\end{cases}
+	\label{sys}
+	\end{gathered}
+\end{equation}
+в которой приняты следующие обозначения
+$$
+K_{00}=\int_{x_1}^{x_2}K\left(x_1,s\right)\omega_1\left(s\right) ds,\quad K_{10}=\int_{x_2}^{x_3}K\left(x_1,s\right)\omega_2\left(s\right) ds,
+$$
+$$
+K_{20}=\int_{x_1}^{x_2}K\left(x_1,s\right)\omega_2\left(s\right) ds,\quad K_{30}=\int_{x_2}^{x_3}K\left(x_1,s\right)\omega_3\left(s\right) ds,
+$$
+$$
+K_{01}=\int_{x_1}^{x_2}K\left(x_2,s\right)\omega_1\left(s\right) ds,\quad K_{11}=\int_{x_2}^{x_3}K\left(x_2,s\right)\omega_2\left(s\right) ds,
+$$
+$$
+K_{21}=\int_{x_1}^{x_2}K\left(x_2,s\right)\omega_2\left(s\right) ds,\quad K_{31}=\int_{x_2}^{x_3}K\left(x_2,s\right)\omega_3\left(s\right) ds,
+$$
+$$
+K_{02}=\int_{x_1}^{x_2}K\left(x_3,s\right)\omega_1\left(s\right) ds,\quad K_{12}=\int_{x_2}^{x_3}K\left(x_3,s\right)\omega_2\left(s\right) ds,
+$$
+$$
+K_{22}=\int_{x_1}^{x_2}K\left(x_3,s\right)\omega_2\left(s\right) ds,\quad K_{32}=\int_{x_2}^{x_3}K\left(x_3,s\right)\omega_3\left(s\right) ds.
+$$
+Нетрудно заметить, что система (\ref{sys}) преобразуется к системе вида
+$$
+	\begin{gathered}
+		\begin{cases}
+			\tilde y\left(x_1\right)\underbrace{\left(1-K_{00}\right)}_{a_{11}}-\tilde y\left(x_2\right) \underbrace{\left(K_{10}+K_{20}\right)}_{a_{12}}-\tilde y\left(x_3\right) \underbrace{K_{30}}_{a_{13}}=f\left(x_1\right),\\
+			-\tilde y\left(x_1\right) \underbrace{K_{01}}_{a_{21}}+\tilde y\left(x_2\right)\underbrace{\left(1-K_{11}-K_{21}\right)}_{a_{22}}-\tilde y\left(x_3\right) \underbrace{K_{31}}_{a_{23}}=f\left(x_2\right),\\
+			-\tilde y\left(x_1\right) \underbrace{K_{02}}_{a_{31}}-\tilde y\left(x_2\right)\underbrace{\left(K_{12}+K_{22}\right)}_{a_{32}}+\tilde y\left(x_3\right)\underbrace{\left(1-K_{32}\right)}_{a_{33}}=f\left(x_3\right),
+		\end{cases}
+	\end{gathered}
+$$
+которую можно записать в матричном виде
+$$
+\left(
+\begin{array}{ccc}
+	a_{11} & -a_{12} & -a_{13}\\
+	-a_{21} & a_{22} & -a_{23}\\
+	-a_{31} & -a_{32} & a_{33}
+\end{array}
+\right)
+\left(
+\begin{array}{c}
+	\tilde y\left(x_1\right)\\
+	\tilde y\left(x_2\right)\\
+	\tilde y\left(x_3\right)
+\end{array}
+\right)=
+\left(
+\begin{array}{c}
+	f\left(x_1\right)\\
+	f\left(x_2\right)\\
+	f\left(x_3\right)
+\end{array}
+\right).
+$$
+
+Можно показать, что матрица системы уравнений имеет диагональное преобладание при произвольном $n$, поэтому она --- неособенная. Полученную СЛАУ можно решать численными методоми, например методом Гаусса.
+
+
+В ходе работы был разработан программный комплекс на языке С++ для работы с интегральными уравнениями, а также библиотеки \textbf{AS::LinearAlgebra} и \textbf{AS::MathAnalysis} для выполнения сопутствующих операций. Информация об этом в следующем разделе. %Рассмотрим класс \textbf{FIEE} описывающий интегральное уравнение Фредгольма второго рода, распараллелилим в нем решения уравнения на примере метода\linebreak \textbf{ParallelNonPolySplinesSOASolve}, который реализует аппроксимацию решения неполиномиальными сплайнами. Цикл в котором формируется матрица $A$ и вектор свободных членов $b$ можно распараллелить с помощью секций
+
+%\section{Распараллеливание вычислений}
+
+%В ходе работы была разработана библиотека \textbf{as\_IE} на языке C++ для работы с интегральными уравнениями. Рассмотрим класс \textbf{FIEE} описывающий интегральное уравнение Фредгольма второго рода, распараллелилим в нем решения уравнения на примере метода\linebreak \textbf{ParallelNonPolySplinesSOASolve}, который реализует аппроксимацию решения неполиномиальными сплайнами. Цикл в котором формируется матрица $A$ и вектор свободных членов $b$ можно распараллелить с помощью секций
+
+%\vspace{6mm}
+%\begin{lstlisting}
+%for (int i = 0; i < num_nodes; i++) {
+%	for (int j = 0; j < num_nodes - 1; j++) {
+%		#pragma omp parallel sections
+%		{
+%			#pragma omp section
+%			{
+%				A[i][j] -= qfint_rs(K, omega1, x[i], x[j], x[j + 1], phi, 200);
+%			}
+%			#pragma omp section
+%			{
+%				A[i][j + 1] -= qfint_rs(K, omega2, x[i], x[j], x[j + 1], phi, 200);
+%			}
+%		}
+%	}
+%	A[i][i] += 1;
+%	B[i][0] = f(x[i]);
+%}
+%\end{lstlisting}
+%\vspace{-3mm}
+%\begin{center}
+%	\small{Листинг~1. Участок кода с циклом формирования матрицы $A$ и вектора свободных членов $b$ с использованием директив OpenMP}
+%\end{center}
+
+\section{Распараллеливание вычислений в методе Гаусса}
+Полученную СЛАУ можно решать различными численными методами, например в данном случае хорошо подходит метод Гаусса. Много внимания распараллеливанию метода Гаусса было уделено в работах В. П. Гергеля (см. например \cite{Gergel}). В ходе работы была разработана библиотека \textbf{AS::LinearAlgebra} на языке C++ для работы с матрицами и векторами. В библиотеку вошло большинство стандартных операций для решения задач линейной алгебры, в том числе различные методы для решения СЛАУ. Рассмотрим реализацию процедуры \textbf{AS::LinearSolve} на примере метода Гаусса. Параметры процедуры: $A$ --- экземпляр класса \textbf{AS::Matrix} из библиотеки \textbf{AS::LinearAlgebra}, $b$ --- экземпляр класса \textbf{AS::Vector} (может использоваться также класс \textbf{AS::Matrix}) из библиотеки \textbf{AS::LinearAlgebra}, столбец свободных членов.
+
+
+
+Рассмотрим процедуру метода Гаусса в общем виде и внесем в нее некоторые модификации с помощью технологии OpenMP. Обозначим $y_i=\tilde y\left(x_i\right)$ и $b_i=f\left(x_i\right)$. Дана СЛАУ порядка~$n$
+$$
+	\begin{cases}
+		a_{11}^{\left(0\right)}y_1+a_{12}^{\left(0\right)}y_2+\ldots+a_{1n}^{\left(0\right)}y_n=b_{1}^{\left(0\right)}\\
+		a_{21}^{\left(0\right)}y_1+a_{22}^{\left(0\right)}y_2+\ldots+a_{2n}^{\left(0\right)}y_n=b_{2}^{\left(0\right)}\\
+		\ldots\\
+		a_{n1}^{\left(0\right)}y_1+a_{n2}^{\left(0\right)}y_2+\ldots+a_{nn}^{\left(0\right)}y_n=b_{n}^{\left(0\right)}
+	\end{cases}.
+$$
+Разделим первое уравнение системы на $a_{11}^{\left(0\right)}$, тогда получим
+\begin{equation}
+	y_1+a_{12}^{\left(1\right)}y_2+a_{13}^{\left(1\right)}y_3+\ldots+a_{1n}^{\left(1\right)}y_n=b_1^{\left(1\right)},
+	\label{f2}
+\end{equation}
+где $a_{1j}^{\left(1\right)}=a_{1j}^{\left(0\right)}/a_{11}^{\left(0\right)}$, $j=2,3,\ldots,n$, $b_1^{\left(1\right)}=b_{1}^{\left(0\right)}/a_{11}^{\left(0\right)}$. Предположим, что система уравнений такова, что $n>3000$. Вычисления в цикле деления элементов можно распараллелить используя директивы OpenMP \textbf{parallel} и \textbf{for}. В результате имеем конструкцию представленную на Листинге~1.
+\vspace{2mm}
+\begin{lstlisting}
+	#pragma omp parallel 	
+	{
+		#pragma omp for
+		for (int i = 0; i < Ab.GetColSize(); i++)
+		{
+			Matrix_Ab_c[k][i] = Matrix_Ab_c[k][i] / Ab[k][k];
+		}
+	}
+\end{lstlisting}
+\vspace{-3mm}
+\begin{center}
+	\small{Листинг~1. Участок кода с циклом деления элементов в процедуре \textbf{LinearSolve} с использованием директив OpenMP}
+\end{center}
+
+Далее исключаем неизвестную $y_1$ из каждого уравнения системы, начиная со второго. Это делается вычитанием уравнения (\ref{f2}), умноженного на коэффициент при переменной $y_1$ в соответствующем уравнении. Преобразованные уравнения имеют вид
+\begin{equation}
+	\begin{cases}
+		y_1+a_{12}^{\left(1\right)}y_2+a_{13}^{\left(1\right)}y_3+\ldots+a_{1n}^{\left(1\right)}y_n=b_1^{\left(1\right)}\\
+		\quad\quad\, a_{22}^{\left(1\right)}y_2+a_{23}^{\left(1\right)}y_3+\ldots+a_{2n}^{\left(1\right)}y_n=b_{2}^{\left(1\right)}\\
+		\quad\quad\,\ldots\\
+		\quad\quad\, a_{n2}^{\left(1\right)}y_2+a_{n3}^{\left(1\right)}y_3+\ldots+a_{nn}^{\left(1\right)}y_n=b_{n}^{\left(1\right)}\\
+	\end{cases},
+	\label{f3}
+\end{equation}
+где $a_{ij}^{\left(1\right)}=a_{ij}^{\left(0\right)}-a_{1j}^{\left(1\right)}\cdot a^{\left(0\right)}_{i1}$, $j=2,3,\ldots,n$, $b_{i}^{\left(1\right)}=b_{i}^{\left(1\right)}\cdot {a^{\left(0\right)}_{i1}}$, $i=2,3,\ldots,n$.
+Поступаем аналогично со следующим уравнением из преобразованной системы. В конечном итоге приводим исходную систему к эквивалентной системе с треугольной матрицей
+\begin{equation}
+	\begin{cases}
+		y_1+a_{12}^{\left(1\right)}y_2+a_{13}^{\left(1\right)}y_3+\ldots+a_{1n}^{\left(1\right)}y_n=b_1^{\left(1\right)}\\
+		\quad\quad\quad\,\,\,\, y_2+a_{23}^{\left(2\right)}y_3+\ldots+a_{2n}^{\left(2\right)}y_n=b_{2}^{\left(2\right)}\\
+		\quad\quad\quad\,\,\,\,\ldots\\
+		\quad\quad\, 
+		\quad\quad\quad\quad\quad\quad\quad\quad\,\,\,\,\quad a_{nn}^{\left(n\right)}y_n=b_{n}^{\left(n\right)}\\
+	\end{cases}.
+	\label{f4}
+\end{equation}
+Цикл с исключением неизвестной $y_i$ из каждого уравнения системы также распараллеливается с применением директив \textbf{parallel} и \textbf{for}. В результате имеем конструкцию представленную на Листинге~2.
+\vspace{3mm}
+\begin{lstlisting}
+	#pragma omp parallel
+	{
+		#pragma omp for
+		for (int i = k + 1; i < Ab.GetRowSize(); i++)
+		{
+			double K = Matrix_Ab_c[i][k] / Matrix_Ab_c[k][k];
+			for (int j = 0; j < Ab.GetColSize(); j++)
+			{
+				Matrix_Ab_c[i][j] = Matrix_Ab_c[i][j]
+					- Matrix_Ab_c[k][j] * K;
+			}
+		}
+	}
+\end{lstlisting}
+\vspace{-1mm}
+\begin{center}
+	\small{Листинг~2. Участок кода с циклом исключения неизвестной $y_i$ в процедуре \textbf{LinearSolve} с использованием директив OpenMP}
+\end{center}
+
+Далее обратным ходом из системы (\ref{f4}) находим неизвестные $y_1$, $y_2$,$\ldots$, $y_n$. Соответствующие циклы распараллеливаются аналогично. Кроме этого, аналогичная конструкция была построена для цикла записи ответа, однако данные действия привели к незначительным ускорениям программы.
+
+Были проведены численные эксперименты. Численные эксперименты проводились при решении СЛАУ, в случае $3000$-$4000$ уравнений. В частности, выбиралось ядро $K\left(x,s\right)=e^{-s \cdot x}$, а правая часть $f\left(x\right)$ строилась по решению $y\equiv 1$. Характе­ристики ЭВМ, на которой проводились эксперименты: процессор --- Inter Core~i7-7700HQ~CPU~@~2.80~ГГц, оперативная память --- DDR4 8 Гб. Компилятор С++: MinGW w64 6.0. Среднее время рассчитывалось
+на основании 15 вызовов процедуры. В случае $n=3000$ ускорение при распараллеливании вычислений оказалось равным примерно 1,5529.
+
+\section{Заключение}
+
+В работе было рассмотрено применение технологий параллельный вычислений для решения интегрального уравнения Фредгольма второго рода с помощью локальных интерполяционных сплайнов второго порядка аппроксимации.
+
+\begin{thebibliography}{88}
+
+\bibitem{De}
+Edsger W. Dijkstra. Selected Writings on Computing: A Personal Perspective. Monographs in Computer Science. New York: Springer Science \& Business Media, 2012. 362 p.
+%\vspace{-}
+\bibitem{PerBrinchHansen1}
+Per Brinch Hansen. Design Principles. New Jersey: Prentice Hall, Englewood Cliffs, 1977. 314 p.
+
+\bibitem{PerBrinchHansen2}
+Per Brinch Hansen. Experience with Modular Concurrent Programming~// IEEE Transactions on Software Engineering. 1977. No.~3~(2). P. 156--159.
+
+\bibitem{hoare}
+Hoare C. A. R., Communicating Sequential Processes. New Jersey: Prentice Hall, 1985. 260 p.
+
+\bibitem{Voevodin}
+Воеводин В. В., Воеводин В. В. Параллельные вычисления. СПб.: BHV, 2002. 608 с.
+
+\bibitem{Gergel}
+Гергель В. П. Высокопроизводительные вычисления для многоядерных многопроцессорных систем. Нижний Новгород: Изд-во Нижегородского госуниверситета, 2010. 421 с.
+
+\bibitem{Antonov}
+Антонов А. С. Технологии параллельного программирования MPI и OpenMP. М.: Изд-во МГУ, 2012. 344 с.
+
+\bibitem{Korneev}
+Корнеев В. Д. Параллельное программирование в MPI. Новосибирск: Изд-во ИВМиМГ СО РАН, 2002. 215 с.
+
+\bibitem{Nemn}
+Немнюгин С. А., Стесик О. Л. Параллельное программирование для многопроцессорных вычислительных систем. СПб.: БХВ-Петербург, 2002. 396 с.
+
+
+
+
+\bibitem{AB_pmpu}
+Алцыбеев Г. О., Бурова И. Г. Газотурбинный двигатель и сплайновые приближения~// Процессы управления и устойчивость. 2021. Т.~8 (24). C. 101--107.
+
+\bibitem{BurovaIG}
+Burova I. G. On left integro-differential splines and Cauchy problem // International Journal of Mathematical Models and Methods in Applied Sciences. 2015. Vol. 9. P.~683--690.
+
+\bibitem{BurovaIG_AG}
+Burova I. G., Alcybeev G. O. Application of Splines of the Second Order Approximation to Volterra Integral Equations of the Second Kind. Applications in Systems Theory and Dynamical Systems // International Journal of Circuits, Systems and Signal Processing. 2021. Vol. 15. P. 63--71.
+
+\end{thebibliography}
+
+\end{document}
