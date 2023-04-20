@@ -8,7 +8,7 @@
 
 * [Git](https://git-scm.com/)
 * Любой дистрибутив/пакет LaTeX с поддержкой XeLaTeX для Вашей ОС, например, [TeXLive](https://www.tug.org/texlive/)
-* [ИНтерпретатор Ruby](https://www.ruby-lang.org/)
+* [Интерпретатор Ruby](https://www.ruby-lang.org/)
 * [PDFtk Server](https://en.wikipedia.org/wiki/PDFtk)
 
 Инсталлировать это всё несложно:
