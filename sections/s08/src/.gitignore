@@ -1,0 +1,8 @@
+# Class file
+spisok-article.cls
+
+# Output files
+*.aux
+*.log
+*.out
+*.pdf
